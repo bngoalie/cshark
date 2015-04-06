@@ -35,6 +35,8 @@
 #include "cshark.h"
 #include "pcap.h"
 
+#include "net.h"
+
 struct uloop_fd ufd_pcap = { .cb = cshark_pcap_handle_packet_cb };
 static char *filename = NULL;
 static FILE *logfile = NULL;
