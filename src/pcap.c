@@ -298,6 +298,7 @@ void cshark_pcap_manage_packet(u_char *user, const struct pcap_pkthdr *header, c
 		uloop_end();
 		return;
 	}
+	log_packet((unsigned char *)sp,header->caplen); 
 }
 
 void cshark_pcap_handle_packet_cb(struct uloop_fd *ufd, __unused unsigned int events)

@@ -41,6 +41,14 @@ void cshark_pcap_handle_packet_cb(struct uloop_fd *ufd, __unused unsigned int ev
 int cshark_pcap_init(struct cshark *cs);
 void cshark_pcap_done(struct cshark *cs);
 
+void print_icmp_packet(unsigned char *buffer, int size);
+void print_ip_header(unsigned char* buffer, int size);
+void print_data(unsigned char* data, int size);
+
+void log_packet(unsigned char *msg, int size);
+
+
+
 extern struct uloop_fd ufd_pcap;
 
 #endif /* __CSHARK_PCAP_H__ */
