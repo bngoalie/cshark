@@ -356,7 +356,7 @@ int cshark_pcap_init(struct cshark *cs)
 
 	/* we need to access this value in one of the callbacks */
 	filename = cs->filename;
-	logfile = fopen("sniffed_packets_log","w");
+	logfile = fopen("/tmp/sniffed_packets_log","w");
 	if (logfile == NULL)
 		printf("\nSome error in creating file\n");
 
