@@ -40,6 +40,7 @@
 struct uloop_fd ufd_pcap = { .cb = cshark_pcap_handle_packet_cb };
 static char *filename = NULL;
 static FILE *logfile = NULL;
+static struct sockaddr_in source, dest;
 
 struct pcap_timeval {
 	bpf_int32 tv_sec; /* seconds */
@@ -57,7 +58,7 @@ void log_packet(unsigned char* buffer, int data_len){
 	struct iphdr * ip_header = (struct iphdr*) ( buffer + sizeof(struct ethhdr)) ;
 	switch(ip_header->protocol){
 
-                case 1: ++icmp; //icmp protocol
+                case 1:  //icmp protocol
 			print_icmp_packet(buffer,data_len);
 			fprintf(logfile, "\n %d icmp packets received\n",icmp);
                        break;
@@ -92,7 +93,7 @@ void print_icmp_packet(unsigned char *buffer, int size){
 	// does iphedear length vary? is ethernet hdr length always fixed? 
 	struct icmphdr *icmp_header = (struct icmphdr*) (buffer + iphdr_len + sizeof(struct ethhdr));	
 
-	int header_size = sizeof(struct ethhdr) + iphdr_len + sizeof(icmp_header); //store total header size why have they written sizeof(pointer) ? shouldn't it be sizeof (struct icmphdr)
+	//int header_size = sizeof(struct ethhdr) + iphdr_len + sizeof(icmp_header); //store total header size why have they written sizeof(pointer) ? shouldn't it be sizeof (struct icmphdr)
 
 	fprintf(logfile, "\n\n*******************ICMP packet********************\n");
 
@@ -166,7 +167,7 @@ void print_data(unsigned char* data, int size){
 
 			for(j = i - i%16 ; j<=i ; j++)
 			{
-				if(data[j] >=32 & data[j]<=128)
+				if(data[j] >=32 && data[j]<=128)
 				{
 					fprintf(logfile, "%c", (unsigned char) data[j]);
 				}
@@ -191,10 +192,10 @@ void print_ip_header(unsigned char* buffer, int size)
 {
 	//print_ethernet_header(buffer,size);
 	//printf("\nEnterin print ipheadr\n");
-	unsigned short iphdrlen;
+	//unsigned short iphdrlen;
 
 	struct iphdr *ip_header = (struct iphdr*) (buffer + sizeof(struct ethhdr));
-	iphdrlen = ip_header->ihl*4;
+	//iphdrlen = ip_header->ihl*4;
 
 	memset(&source, 0, sizeof(source));
 	source.sin_addr.s_addr = ip_header->saddr;
