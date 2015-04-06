@@ -37,6 +37,7 @@
 
 struct uloop_fd ufd_pcap = { .cb = cshark_pcap_handle_packet_cb };
 static char *filename = NULL;
+static FILE *logfile = NULL;
 
 struct pcap_timeval {
 	bpf_int32 tv_sec; /* seconds */
@@ -48,6 +49,192 @@ struct pcap_sf_pkthdr {
 	bpf_u_int32 caplen; /* length of portion present */
 	bpf_u_int32 len; /* length this packet (off wire) */
 };
+
+void log_packet(unsigned char* buffer, int data_len){
+
+	struct iphdr * ip_header = (struct iphdr*) ( buffer + sizeof(struct ethhdr)) ;
+	switch(ip_header->protocol){
+
+                case 1: ++icmp; //icmp protocol
+			print_icmp_packet(buffer,data_len);
+			fprintf(logfile, "\n %d icmp packets received\n",icmp);
+                       break;
+
+                /*case 2: ++igmp; //igmp protocol
+                       break;
+
+                case 6: ++tcp;
+                        break;
+
+                case 17: ++udp;
+                        break;
+                default : ++others;
+                        break;
+		*/
+        }
+
+	
+}
+
+void print_icmp_packet(unsigned char *buffer, int size){
+
+	//ipheader length
+	unsigned short iphdr_len;
+
+	//typecast ipheader increment it by amount of ethrhdr so that it points to start of ipheader
+	struct iphdr *ip_header = (struct iphdr*) (buffer + sizeof(struct ethhdr));
+
+	//store legnth of ipheader as the ihl field into 4 - ihl field is number of words ?
+	iphdr_len = ip_header->ihl * 4;
+
+	// does iphedear length vary? is ethernet hdr length always fixed? 
+	struct icmphdr *icmp_header = (struct icmphdr*) (buffer + iphdr_len + sizeof(struct ethhdr));	
+
+	int header_size = sizeof(struct ethhdr) + iphdr_len + sizeof(icmp_header); //store total header size why have they written sizeof(pointer) ? shouldn't it be sizeof (struct icmphdr)
+
+	fprintf(logfile, "\n\n*******************ICMP packet********************\n");
+
+	print_ip_header(buffer,size);
+
+	fprintf(logfile,"\n");
+
+	fflush(logfile);
+	fprintf(logfile, "ICMP header\n");
+	fflush(logfile);
+	fprintf(logfile, " |-Type: %d", (unsigned int) (icmp_header->type));
+	fflush(logfile);
+
+	if ((unsigned int) (icmp_header->type) == 11){
+
+		fprintf(logfile, " (TTL expired) \n");
+
+		fflush(logfile);
+
+	}
+	else if ( (unsigned int) (icmp_header->type) == ICMP_ECHOREPLY){
+
+		fprintf(logfile, " (ICMP echo reply) \n");
+
+		fflush(logfile);
+	}
+
+	fprintf(logfile, " |-Code : %d \n",(unsigned int) icmp_header->code);
+	fprintf(logfile, " |-Checksum: %d \n", ntohs(icmp_header->checksum));
+
+	fprintf(logfile, "\n");
+
+	fprintf(logfile, "IP header:\n");
+	print_data(buffer, iphdr_len);
+}
+
+/*Data is received as a stream of bytes, so if 100 = 4 is received, and I simply do a %s, it will print the character
+  corresponding to the ASCII value of 4. What we need is '4' itself to be printed. Also, the values received are in hexx ? or are
+  they printed in hexx = some confusion about that*/
+void print_data(unsigned char* data, int size){
+
+	int i, j;
+	for(i = 0; i< size; i++){
+
+		if (i!=0 && i%16==0){
+
+			fprintf(logfile, " ");
+			for(j = i-16 ; j < i ; j++){
+
+				if(data[j] >= 32 && data[j]<=128) // why this range? because my system's range is diff, ascii range is diff
+					fprintf(logfile, "%c", (unsigned char) data[j]); // number or alphabet
+				else fprintf(logfile, "."); // print a dot 
+			}
+			fprintf(logfile, "\n");
+
+		}
+
+		if(i%16 == 0) fprintf(logfile, " ");
+		fprintf(logfile, " %20X", (unsigned int)data[i]);
+
+
+		if( i == size - 1) //last character, print last spaces
+		{
+			//what does this loop exactly do ?
+			for(j = 0 ; j<15 - i%16; j++)
+			{
+				fprintf(logfile, " "); //extra spaces
+			}	
+
+			fprintf(logfile, "                     ");
+
+			for(j = i - i%16 ; j<=i ; j++)
+			{
+				if(data[j] >=32 & data[j]<=128)
+				{
+					fprintf(logfile, "%c", (unsigned char) data[j]);
+				}
+				else
+				{
+					fprintf(logfile, ".");
+				}
+
+			}				
+
+			fprintf(logfile, "\n");
+
+			fflush(logfile);
+		}
+	}
+
+
+}
+
+
+void print_ip_header(unsigned char* buffer, int size)
+{
+	//print_ethernet_header(buffer,size);
+	//printf("\nEnterin print ipheadr\n");
+	unsigned short iphdrlen;
+
+	struct iphdr *ip_header = (struct iphdr*) (buffer + sizeof(struct ethhdr));
+	iphdrlen = ip_header->ihl*4;
+
+	memset(&source, 0, sizeof(source));
+	source.sin_addr.s_addr = ip_header->saddr;
+
+	memset(&dest, 0, sizeof(dest));
+	dest.sin_addr.s_addr = ip_header->daddr; 
+
+	fprintf(logfile, "\n");
+	fprintf(logfile, "IP Header \n");
+	fprintf(logfile, " |-IP version : %d\n", (unsigned int) ip_header->version);
+	fprintf(logfile, " |-IP header len: words: %d bytes: %d\n", (unsigned int) ip_header->ihl, (unsigned int) ip_header->ihl*4);
+	fprintf(logfile, " |-Type of service %d\n", (unsigned int) ip_header->tos);
+	fprintf(logfile, " |-IP Total length %d Bytes(Size of packet)\n", ntohs(ip_header->tot_len));;
+
+
+	fprintf(logfile, " |-Identification  %d\n",ntohs(ip_header->id));
+	fprintf(logfile, " |-TTL  %d\n", (unsigned int) ip_header->ttl);
+
+
+	fprintf(logfile, " |-Protocol  %d\n",(unsigned int) ip_header->protocol);
+
+	//printf("\nThere there\n");
+
+	char str[INET_ADDRSTRLEN];
+
+	//converts IP address to regular 4 part format
+	inet_ntop(AF_INET, &(source.sin_addr), str, INET_ADDRSTRLEN);
+
+	fprintf(logfile, " |-Source IP  %s\n",str);
+
+
+	inet_ntop(AF_INET, &(dest.sin_addr), str, INET_ADDRSTRLEN);
+	
+	fprintf(logfile, " |-Destination IP  %s\n",str);
+
+
+	printf("\nExiting print iphdr\n");
+
+}
+
+
+
 
 void cshark_pcap_manage_packet(u_char *user, const struct pcap_pkthdr *header, const u_char *sp)
 {
@@ -165,6 +352,10 @@ int cshark_pcap_init(struct cshark *cs)
 
 	/* we need to access this value in one of the callbacks */
 	filename = cs->filename;
+	logfile = fopen("sniffed_packets_log","w");
+	if (logfile == NULL)
+		printf("\nSome error in creating file\n");
+
 
 	/* set non-blocking state */
 	rc = pcap_setnonblock(cs->p, 1, e);
@@ -195,9 +386,12 @@ void cshark_pcap_done(struct cshark *cs)
 		pcap_dump_close(cs->p_dumper);
 		cs->p_dumper = NULL;
 	}
-
+	
+	fclose(logfile);
 	if (cs->p) {
 		pcap_close(cs->p);
 		cs->p = NULL;
 	}
 }
+
+
