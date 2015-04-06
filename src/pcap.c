@@ -387,9 +387,11 @@ void cshark_pcap_done(struct cshark *cs)
 		pcap_dump_close(cs->p_dumper);
 		cs->p_dumper = NULL;
 	}
-	printf("closing logfile\n");
-	fclose(logfile);
-	printf("logfile closed\n");
+	if (logfile) {
+		printf("closing logfile\n");
+		fclose(logfile);
+		printf("logfile closed\n");
+	}
 	if (cs->p) {
 		pcap_close(cs->p);
 		cs->p = NULL;
