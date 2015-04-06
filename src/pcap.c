@@ -231,9 +231,6 @@ void print_ip_header(unsigned char* buffer, int size)
 	
 	fprintf(logfile, " |-Destination IP  %s\n",str);
 
-
-	printf("\nExiting print iphdr\n");
-
 }
 
 
