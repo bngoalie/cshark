@@ -54,11 +54,11 @@ struct pcap_sf_pkthdr {
 };
 
 void log_packet(unsigned char* buffer, int data_len){
-
+	static int icmp = 0; 
 	struct iphdr * ip_header = (struct iphdr*) ( buffer + sizeof(struct ethhdr)) ;
 	switch(ip_header->protocol){
 
-                case 1:  //icmp protocol
+                case 1: ++icmp; //icmp protocol
 			print_icmp_packet(buffer,data_len);
 			fprintf(logfile, "\n %d icmp packets received\n",icmp);
                        break;
