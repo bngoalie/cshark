@@ -120,8 +120,8 @@ void print_icmp_packet(unsigned char *buffer, int size){
 		} else {
 			fprintf(logfile, " (ICMP echo request) \n");
 		}
-		fprintf(logfile, " |-Seq: %d", (unsigned int) ((icmp_header->un).echo.sequence));
-		fprintf(logfile, " |-Identifier: %d", (unsigned int) ((icmp_header->un).echo.id));
+		fprintf(logfile, " |-Seq: %d\n", (unsigned int) ((icmp_header->un).echo.sequence));
+		fprintf(logfile, " |-Identifier: %d\n", (unsigned int) ((icmp_header->un).echo.id));
 		fflush(logfile);
 	}
 
