@@ -113,11 +113,15 @@ void print_icmp_packet(unsigned char *buffer, int size){
 
 		fflush(logfile);
 
-	}
-	else if ( (unsigned int) (icmp_header->type) == ICMP_ECHOREPLY){
-
-		fprintf(logfile, " (ICMP echo reply) \n");
-
+	} else if ((unsigned int) (icmp_header->type) == ICMP_ECHOREPLY
+			|| (unsigned int) (icmp_header->type) == ICMP_ECHO) {
+		if ( (unsigned int) (icmp_header->type) == ICMP_ECHOREPLY){
+			fprintf(logfile, " (ICMP echo reply) \n");
+		} else {
+			fprintf(logfile, " (ICMP echo request) \n");
+		}
+		fprintf(logfile, " |-Seq: %d", (unsigned int) ((icmp_header->echo).sequence));
+		fprintf(logfile, " |-Identifier: %d", (unsigned int) ((icmp_header->echo).id));
 		fflush(logfile);
 	}
 
